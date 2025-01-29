@@ -1,0 +1,17 @@
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "Usage:"
+    echo "ticket [ticket_number] -> Open the ticket in the browser"
+    echo "ticket assigned -> Open the list of assigned tickets in the browser"
+    echo "ticket reported -> Open the list of reported tickets in the browser"
+    echo
+    echo "Options:"
+    echo "  -h, --help     Show this help message"
+elif [[ "$1" == "assigned" ]]; then
+    open "https://yazzoom.codebasehq.com/projects/anomaly-detection/tickets?report=assigned"
+elif [[ "$1" == "reported" ]]; then
+    open "https://yazzoom.codebasehq.com/projects/anomaly-detection/tickets?report=reported"
+elif [[ -z "$1" ]]; then
+    open "https://yazzoom.codebasehq.com/projects/anomaly-detection/tickets/"
+else
+    open "https://yazzoom.codebasehq.com/projects/anomaly-detection/tickets/$1"
+fi

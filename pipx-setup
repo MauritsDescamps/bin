@@ -1,0 +1,25 @@
+pipx_list=$(pipx list)
+PIPDIR="$HOME/pipx"
+
+while IFS= read -r project_path || [[ -n "$project_path" ]]; do
+    if [[ "$project_path" == http* ]]; then
+        # Clone Git repo if URL is provided
+        repo_name=$(basename "$project_path" .git)
+        if [ ! -d "$PIPDIR/$repo_name" ]; then
+            echo "Cloning $project_path..."
+            git clone "$project_path" "$PIPDIR/$repo_name"
+        fi
+        project_path="$PIPDIR/$repo_name"
+    fi
+
+    package_name=$(basename "$project_path")
+    # Check if package is in pipx_list
+    if [[ "$pipx_list" == *"$package_name"* ]]; then
+        echo "Skipping $package_name: already installed."
+    elif [ -d "$project_path" ]; then
+        echo "Installing from $project_path..."
+        pipx install "$project_path" || true
+    else
+        echo "Skipping $project_path: not found."
+    fi
+done < "$HOME/.config/requirements"

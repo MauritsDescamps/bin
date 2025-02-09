@@ -1,4 +1,64 @@
+#!/usr/bin/env bash
+
 NOTES_DIR="$HOME/Documents/notes"
+echo "Notes directory: $NOTES_DIR"
+HTML_DIR="$NOTES_DIR/.html"
+mkdir -p "$HTML_DIR"
+LINKS_FILTER="$HOME/bin/pandoc/links-to-html.lua"
+CSS_FILE="$HOME/bin/pandoc/style.css"
+
+notes_index() {
+    # echo which shell is running
+    local dir="$1"
+    base_name="$(basename "$dir")"
+    local index_file="${dir}/${base_name}-index.md"
+    echo "Index file: $index_file"
+    local title="$(basename "$dir" | sed 's/-index//')"
+    echo "dir: $dir"
+    local navigation_ribbon=''
+    temp_dir="$dir"
+    while [[ ! "$temp_dir" == "$NOTES_DIR" ]]; do
+        local parent_dir="$(dirname "$temp_dir")"
+        local parent_name="$(basename "$parent_dir")"
+        echo "parent_name: $parent_name"
+        echo "parent_dir: $parent_dir"
+        navigation_ribbon="[$parent_name]($parent_name/$parent_name-index.md) > $navigation_ribbon"
+        temp_dir="$parent_dir"
+    done
+    navigation_ribbon="${navigation_ribbon}[$title]($HTML_DIR/$base_name-index.md)"
+    echo 'navigation_ribbon: ' $navigation_ribbon
+
+    echo "# ${title^}" > "$index_file"
+
+    for sub in "$dir"/*; do
+        if [[ -d "$sub" ]]; then
+            local subname="$(basename "$sub")"
+            local subindex="${subname}/${subname}-index.md"
+            echo "## [${subname^}]($subindex)" >> "$index_file"
+            notes_index "$sub"
+        elif [[ "$sub" == *.md && ! "$sub" == *"-index.md" ]]; then
+            local filename="$(basename "$sub" .md)"
+            echo "## [${filename^}]($filename.md)" >> "$index_file"
+        fi
+    done
+    # echo "${navigation_ribbon}" >> "$index_file"
+}
+
+md_to_html() {
+    local md_file="$1"
+    local html_file="${md_file%.md}.html"
+    # replace NOTES_DIR with HTML_DIR in html_file
+    html_file="${html_file/$NOTES_DIR/$HTML_DIR}"
+    mkdir -p "$(dirname "$html_file")"
+    echo "Converting $md_file to $html_file"
+    pandoc \
+        --lua-filter="$LINKS_FILTER" \
+        -o "$html_file" \
+        --metadata pagetitle="Notes" \
+        -s \
+        "$md_file"
+        # -c "$CSS_FILE" \
+}
 
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "Usage:"
@@ -7,9 +67,18 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "note --help -> show this help message"
 elif [[ -z "$1" ]]; then
     code $NOTES_DIR
-else
-    note_name="$1"
-    note_path="$NOTES_DIR/$note_name.md"
-    touch $note_path
-    code $NOTES_DIR
+elif [[ "$1" == "view" ]]; then
+    notes_index $NOTES_DIR
+    md_files=$(find $NOTES_DIR -type f -name "*.md")
+    for md_file in $md_files; do
+        md_to_html "$md_file"
+    done
+    open $HTML_DIR/notes-index.html
+elif [[ "$1" == "clean" ]]; then
+    # delete all html files and all -index.md files
+    find $NOTES_DIR -type f -name "*.html" -delete
+    find $NOTES_DIR -type f -name "*-index.md" -delete
+    rm -rf $HTML_DIR
+elif [[ "$1" == "index" ]]; then
+    notes_index $NOTES_DIR
 fi

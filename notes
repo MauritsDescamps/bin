@@ -2,10 +2,6 @@
 
 NOTES_DIR="$HOME/Documents/notes"
 echo "Notes directory: $NOTES_DIR"
-HTML_DIR="$NOTES_DIR/.html"
-mkdir -p "$HTML_DIR"
-LINKS_FILTER="$HOME/bin/pandoc/links-to-html.lua"
-CSS_FILE="$HOME/bin/pandoc/style.css"
 
 notes_index() {
     # echo which shell is running
@@ -44,41 +40,19 @@ notes_index() {
     # echo "${navigation_ribbon}" >> "$index_file"
 }
 
-md_to_html() {
-    local md_file="$1"
-    local html_file="${md_file%.md}.html"
-    # replace NOTES_DIR with HTML_DIR in html_file
-    html_file="${html_file/$NOTES_DIR/$HTML_DIR}"
-    mkdir -p "$(dirname "$html_file")"
-    echo "Converting $md_file to $html_file"
-    pandoc \
-        --lua-filter="$LINKS_FILTER" \
-        -o "$html_file" \
-        --metadata pagetitle="Notes" \
-        -s \
-        "$md_file"
-        # -c "$CSS_FILE" \
-}
-
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "Usage:"
     echo "notes -> open notes directory"
     echo "notes name -> create new note if it doesn't exist, open notes directory"
     echo "note --help -> show this help message"
 elif [[ -z "$1" ]]; then
-    code $NOTES_DIR
+    notes_index $NOTES_DIR
+    code -n --profile notes $NOTES_DIR
 elif [[ "$1" == "view" ]]; then
     notes_index $NOTES_DIR
-    md_files=$(find $NOTES_DIR -type f -name "*.md")
-    for md_file in $md_files; do
-        md_to_html "$md_file"
-    done
-    open $HTML_DIR/notes-index.html
+    code -n --profile notes $NOTES_DIR/notes-index.md
 elif [[ "$1" == "clean" ]]; then
-    # delete all html files and all -index.md files
-    find $NOTES_DIR -type f -name "*.html" -delete
     find $NOTES_DIR -type f -name "*-index.md" -delete
-    rm -rf $HTML_DIR
 elif [[ "$1" == "index" ]]; then
     notes_index $NOTES_DIR
 fi

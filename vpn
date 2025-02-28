@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Function to check the VPN status
 wait_for_status() {
     local target_status="$1"  # The desired status: "connected" or "disconnected"
     local previous_status=""
@@ -16,23 +15,20 @@ wait_for_status() {
             break
         fi
 
-        sleep 2  # Check again after 2 seconds
+        sleep 2
     done
 }
 
-# Function to connect to the VPN
 connect_vpn() {
     networksetup -connectpppoeservice "VPN"
     wait_for_status "connected"
 }
 
-# Function to disconnect the VPN
 disconnect_vpn() {
     networksetup -disconnectpppoeservice "VPN"
     wait_for_status "disconnected"
 }
 
-# Check for the -d option
 if [ "$1" = "-d" ]; then
     disconnect_vpn
 else

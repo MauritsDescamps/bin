@@ -55,4 +55,13 @@ elif [[ "$1" == "clean" ]]; then
     find $NOTES_DIR -type f -name "*-index.md" -delete
 elif [[ "$1" == "index" ]]; then
     notes_index $NOTES_DIR
+elif [[ "$1" == "temp" ]]; then
+    notes_index $NOTES_DIR
+    # create empty temp.md if it doesn't exist
+    temp_file="$NOTES_DIR/temp.md"
+    if [[ ! -f "$temp_file" ]]; then
+        echo "Creating temp.md"
+        echo "# Temp" > "$temp_file"
+    fi
+    code -n --profile notes $NOTES_DIR/temp.md
 fi

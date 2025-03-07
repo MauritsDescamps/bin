@@ -2,6 +2,11 @@
 
 NOTES_DIR="$HOME/Documents/notes"
 echo "Notes directory: $NOTES_DIR"
+# create notes directory if it doesn't exist
+if [[ ! -d "$NOTES_DIR" ]]; then
+    echo "Creating notes directory"
+    mkdir -p "$NOTES_DIR"
+fi
 
 notes_index() {
     # echo which shell is running
